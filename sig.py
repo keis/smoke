@@ -150,6 +150,9 @@ class signal(object):
 
 
 if __name__ == '__main__':
+    import logging
+    out = logging.getLogger().info
+
     class Bar:
         throb = signal()
 
@@ -163,8 +166,8 @@ if __name__ == '__main__':
 
     bar = Bar()
 
-    bar.throb.subscribe(partial(print, 'hello '))
-    Bar.throb.subscribe(bar, partial(print, 'world!'))
+    bar.throb.subscribe(partial(out, 'hello '))
+    Bar.throb.subscribe(bar, partial(out, 'world!'))
 
     # prints
     bar.throb()
@@ -173,12 +176,9 @@ if __name__ == '__main__':
     f = bar.throb
     f()
 
-    # does not print
-    Bar.throb(None)
-
     foo = Foo(bar)
-    foo.method_one.subscribe(partial(print, 'spam'))
-    foo.method_two.subscribe(partial(print, 'egg'))
+    foo.method_one.subscribe(partial(out, 'spam'))
+    foo.method_two.subscribe(partial(out, 'egg'))
 
     # prints some more
     bar.throb()
