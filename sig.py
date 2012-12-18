@@ -82,15 +82,15 @@ class boundsignal(object):
 
     def subscribe(self, subscriber):
         '''Subscribe a callback to this event'''
-        subscribe(self.__im_self, self, subscriber)
+        subscribe(self.__im_self, self.__signal.name or self, subscriber)
 
     def disconnect(self, subscriber):
         '''Disconnect a callback from this event'''
-        disconnect(self.__im_self, self, subscriber)
+        disconnect(self.__im_self, self.__signal.name or self, subscriber)
 
     def publish(self, **kwargs):
         '''Publish this event on `obj`'''
-        publish(self.__im_self, self, **kwargs)
+        publish(self.__im_self, self.__signal.name or self, **kwargs)
 
     def __call__(self, **kwargs):
         self.publish(**kwargs)
@@ -126,6 +126,9 @@ class signal(object):
         to publish events by that name for others to subscribe too
     '''
 
+    def __init__(self, name=None):
+        self.name = name
+
     def __get__(self, obj, objtype=None):
         '''Descriptor protocol
 
@@ -146,7 +149,7 @@ class signal(object):
         self.publish(obj)
 
     def __repr__(self):
-        return '<signal at 0x%r>' % id(self)
+        return '<signal(%s) at 0x%r>' % (self.name or '', id(self))
 
 
 if __name__ == '__main__':
