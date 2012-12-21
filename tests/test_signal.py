@@ -1,6 +1,5 @@
 import unittest
-import sig
-from sig import signal, Disconnect, StopPropagation
+from smoke import signal, Disconnect, StopPropagation
 import mock
 
 

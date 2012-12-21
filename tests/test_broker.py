@@ -1,6 +1,6 @@
 import unittest
 import mock
-from sig import Broker, Disconnect, StopPropagation
+from smoke import Broker, Disconnect, StopPropagation
 
 
 class TestBroker(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestBroker(unittest.TestCase):
 
         self.broker.disconnect(event, self.listener.test_cb)
         self.broker.publish(event)
-        
+
         self.assertEqual(1, self.listener.test_cb.call_count)
         self.assertEqual(2, self.listener.test2_cb.call_count)
 

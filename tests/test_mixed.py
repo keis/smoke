@@ -1,6 +1,6 @@
 import unittest
 import mock
-from sig import signal, Broker, Disconnect, StopPropagation
+from smoke import signal, Broker, Disconnect, StopPropagation
 
 
 class Source(object):
