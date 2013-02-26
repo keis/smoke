@@ -99,8 +99,13 @@ class boundsignal(object):
         return hash(self.__signal) ^ hash(self.__im_self)
 
     def __eq__(self, other):
-        return (self.__signal == other.__signal and
-            self.__im_self == other.__im_self)
+        try:
+            osignal = other.__signal
+            oself = other.__im_self
+        except AttributeError:
+            return False
+
+        return (self.__signal == osignal and self.__im_self == oself)
 
     def __repr__(self):
         return '<bound signal of %r>' % (self.__im_self,)
