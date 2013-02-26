@@ -36,7 +36,7 @@ def disconnect(obj, event, subscriber):
     subscribers(obj, event).remove(subscriber)
 
 
-def publish(obj, event, **kwargs):
+def publish(obj, _event, **kwargs):
     '''Invoke all subscribers to `event` on `obj`
 
         Two flowcontrol exceptions exist that may be raised by subscribers
@@ -50,7 +50,7 @@ def publish(obj, event, **kwargs):
         All other exceptions will be passed to the parent context and will
         break the publish loop without notifing remaining subscribers
     '''
-    subs = subscribers(obj, event)
+    subs = subscribers(obj, _event)
     disconnected = []
     try:
         for sub in subs:
