@@ -1,6 +1,7 @@
-import unittest
 import mock
+from hamcrest import assert_that, equal_to
 from smoke import signal, Broker, Disconnect, StopPropagation
+from tests.matchers import called_once_with
 
 
 class Source(object):
@@ -12,7 +13,7 @@ class Mixed(Source, Broker):
     pass
 
 
-class TestMixed(unittest.TestCase):
+class TestMixed(object):
     def setUp(self):
         self.listener = mock.Mock()
         self.mixed = Mixed()
@@ -21,22 +22,26 @@ class TestMixed(unittest.TestCase):
         sentinel = object()
         self.mixed.spam.subscribe(self.listener.spam_cb)
         self.mixed.publish(self.mixed.spam, s=sentinel)
-        self.listener.spam_cb.assert_called_once_with(s=sentinel)
+
+        assert_that(self.listener.spam_cb, called_once_with(s=sentinel))
 
     def test_subscribe_broker_publish_signal(self):
         sentinel = object()
         self.mixed.subscribe(self.mixed.spam, self.listener.spam_cb)
         self.mixed.spam(s=sentinel)
-        self.listener.spam_cb.assert_called_once_with(s=sentinel)
+
+        assert_that(self.listener.spam_cb, called_once_with(s=sentinel))
 
     def test_subscribe_by_name(self):
         sentinel = object()
         self.mixed.subscribe('egg', self.listener.egg_cb)
         self.mixed.egg(s=sentinel)
-        self.listener.egg_cb.assert_called_once_with(s=sentinel)
+
+        assert_that(self.listener.egg_cb, called_once_with(s=sentinel))
 
     def test_publish_by_name(self):
         sentinel = object()
         self.mixed.egg.subscribe(self.listener.egg_cb)
         self.mixed.publish('egg', s=sentinel)
-        self.listener.egg_cb.assert_called_once_with(s=sentinel)
+
+        assert_that(self.listener.egg_cb, called_once_with(s=sentinel))
