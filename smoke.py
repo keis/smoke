@@ -18,6 +18,50 @@ class StopPropagation(SignalControl):
     be called for the active signal'''
 
 
+def weak(meth, exception=Disconnect):
+    '''Adapt a bound method to not count towards the refcount.
+
+    Useful in e.g UI code where a view wants updates from a model but don't
+    want that subscription to keep the widget around after closing the view.
+
+    It works by holding a reference to the underlying function and creating a
+    weakref to the bound `self` of the method. When the callback is called if
+    the instance is no longer alive a `Disconnect` will be raised to the
+    publish loop.
+    '''
+
+    import weakref
+
+    try:  # python 3
+        fun = meth.__func__
+        ref = meth.__self__
+    except AttributeError as e:  # python 2
+        fun = meth.im_func
+        ref = meth.im_self
+
+    # precompute some strings that rely on the bound to object.
+    srpr = repr(ref)
+    funpath = '.'.join((
+        fun.__module__,
+        ref.__class__.__name__,
+        fun.__name__))
+
+    # Drop hard references to the bound object.
+    ref = weakref.ref(ref)
+    del meth
+
+    def weak_method(*args, **kwargs):
+        '''weakly bound method %s of %r''' % (funpath, srpr)
+
+        obj = ref()
+        if obj is None:
+            raise exception("%s called on dead object" % funpath)
+
+        return fun(obj, *args, **kwargs)
+
+    return weak_method
+
+
 def subscribers(obj, event):
     '''Get a list of all subscribers to `event` on `obj`'''
     if not hasattr(obj, '_subscribers'):

@@ -1,8 +1,8 @@
 from setuptools import setup
 
 setup(
-	name='smoke',
-	py_modules=['smoke'],
+    name='smoke',
+    py_modules=['smoke'],
     version='0.1.1',
     author='David Keijser',
     author_email='keijser@gmail.com',
