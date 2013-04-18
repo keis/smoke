@@ -156,23 +156,26 @@ class boundsignal(object):
 
 
 def binding(cls, fun):
-    '''Create a proxy to fun that is called with a new `cls` instance
-    as the first argument. The new instance is created from the 1st and 2nd
-    argument.'''
+    '''Create a proxy to `fun` that binds to `cls`
+
+    When the proxy is called it dispatches to `fun` with a new instance of
+    `cls` as the first argument. The new instance is created from the 1st and
+    2nd argument to the proxy. The remaining arguments is forwarded to the
+    original function.
+    '''
 
     def bound(self, obj, *args, **kwargs):
-        '''proxy method'''
+        '''Proxy of %s binding as %s''' % (fun, cls)
         fun(cls(self, obj), *args, **kwargs)
 
-    bound.__doc__ = 'Proxy of %s binding as %s' % (fun, cls)
     return bound
 
 
 class signal(object):
     '''Publish/Subscribe pattern in a descriptor
 
-        By creating a class member of this type you are enabling the class
-        to publish events by that name for others to subscribe too
+    By creating a class member of this type you are enabling the class
+    to publish events by that name for others to subscribe too
     '''
 
     def __init__(self, name=None):
@@ -181,8 +184,8 @@ class signal(object):
     def __get__(self, obj, objtype=None):
         '''Descriptor protocol
 
-            returns self wrapped in a `boundsignal` when accessed from a
-            instance
+        returns self wrapped in a `boundsignal` when accessed from a
+        instance
         '''
 
         if obj is None:
@@ -194,8 +197,8 @@ class signal(object):
     publish = binding(boundsignal, boundsignal.publish)
 
     def __call__(self, obj, **kwargs):
-        ''' Alias for publish '''
-        self.publish(obj)
+        '''Alias for publish'''
+        self.publish(obj, **kwargs)
 
     def __repr__(self):
         return '<signal(%s) at 0x%r>' % (self.name or '', id(self))
