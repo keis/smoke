@@ -45,3 +45,9 @@ class TestMixed(object):
         self.mixed.publish('egg', s=sentinel)
 
         assert_that(self.listener.egg_cb, called_once_with(s=sentinel))
+
+    def test_publish_override(self):
+        sentinel = object()
+        self.mixed.publish = mock.Mock(wraps=self.mixed.publish)
+        self.mixed.egg(s=sentinel)
+        assert_that(self.mixed.publish, called_once_with('egg', s=sentinel))

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
-from functools import partial
+from functools import partial, wraps
 
 
 class SignalControl(Exception):
@@ -80,7 +80,7 @@ def disconnect(obj, event, subscriber):
     subscribers(obj, event).remove(subscriber)
 
 
-def publish(obj, _event, **kwargs):
+def _publish(obj, _event, **kwargs):
     '''Invoke all subscribers to `event` on `obj`
 
         Two flowcontrol exceptions exist that may be raised by subscribers
@@ -109,12 +109,23 @@ def publish(obj, _event, **kwargs):
             subs.remove(d)
 
 
+@wraps(_publish, ['__doc__'])
+def publish(obj, _event, **kwargs):
+    # Dispatch through broker if one is available
+    try:
+        publish = obj.publish
+    except AttributeError:
+        return _publish(obj, _event, **kwargs)
+    else:
+        return publish(_event, **kwargs)
+
+
 class Broker(object):
     ''' Mixin with event publish/subscribe methods'''
 
     subscribe = subscribe
     disconnect = disconnect
-    publish = publish
+    publish = _publish
 
 
 class boundsignal(object):
@@ -164,8 +175,8 @@ def binding(cls, fun):
     original function.
     '''
 
+    @wraps(fun)
     def bound(self, obj, *args, **kwargs):
-        '''Proxy of %s binding as %s''' % (fun, cls)
         fun(cls(self, obj), *args, **kwargs)
 
     return bound
