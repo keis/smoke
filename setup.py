@@ -9,4 +9,5 @@ setup(
     description='concise publish/subscribe utility',
     license='MIT',
     keywords='publish subscribe pubsub signal',
+    extras_require={'tests': ['PyHamcrest']}
 )
