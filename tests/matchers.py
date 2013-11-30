@@ -4,7 +4,7 @@ from hamcrest import assert_that, instance_of
 
 
 class RaisesContext(object):
-    pass
+    exception = None
 
 
 @contextmanager

@@ -64,6 +64,10 @@ def weak(meth, exception=Disconnect):
 
 def subscribers(obj, event):
     '''Get a list of all subscribers to `event` on `obj`'''
+
+    if hasattr(event, '__get__'):
+        event = event.__get__(obj)
+
     if not hasattr(obj, '_subscribers'):
         obj._subscribers = defaultdict(list)
 
@@ -72,12 +76,34 @@ def subscribers(obj, event):
 
 def subscribe(obj, event, subscriber):
     '''Add a subscriber to `event` on `obj`'''
+
+    if hasattr(event, '__get__'):
+        event = event.__get__(obj)
+
     subscribers(obj, event).append(subscriber)
 
 
 def disconnect(obj, event, subscriber):
     '''Disconnect a subscriber to `event` on `obj`'''
+
+    if hasattr(event, '__get__'):
+        event = event.__get__(obj)
+
     subscribers(obj, event).remove(subscriber)
+
+
+def variants(event):
+    '''Get a generator that yields variations of a event.'''
+
+    if hasattr(event, 'parameters'):
+        parent = event.parent
+        l = len(event.parameters)
+        for i in range(l+1):
+            yield parent.parameterise(event.parameters[:l-i])[0]
+    else:
+        yield event
+        if hasattr(event, 'name'):
+            yield event.name
 
 
 def _publish(obj, _event, **kwargs):
@@ -94,19 +120,21 @@ def _publish(obj, _event, **kwargs):
         All other exceptions will be passed to the parent context and will
         break the publish loop without notifing remaining subscribers
     '''
-    subs = subscribers(obj, _event)
-    disconnected = []
-    try:
-        for sub in subs:
-            try:
-                sub(**kwargs)
-            except Disconnect:
-                disconnected.append(sub)
-            except StopPropagation:
-                break
-    finally:
-        for d in disconnected:
-            subs.remove(d)
+
+    for var in variants(_event):
+        subs = subscribers(obj, var)
+        disconnected = []
+        try:
+            for sub in subs:
+                try:
+                    sub(**kwargs)
+                except Disconnect:
+                    disconnected.append(sub)
+                except StopPropagation:
+                    break
+        finally:
+            for d in disconnected:
+                subs.remove(d)
 
 
 @wraps(_publish, ['__doc__'])
@@ -134,21 +162,40 @@ class boundsignal(object):
     def __init__(self, signal, im_self):
         self.__signal = signal
         self.__im_self = im_self
+        self.name = self.__signal.name
+
+        # Copy psignal attributes if available
+        try:
+            self.parent = self.__signal.parent
+            self.parameters = self.__signal.parameters
+        except AttributeError:
+            pass
 
     def subscribe(self, subscriber):
         '''Subscribe a callback to this event'''
-        subscribe(self.__im_self, self.__signal.name or self, subscriber)
+        subscribe(self.__im_self, self, subscriber)
 
     def disconnect(self, subscriber):
         '''Disconnect a callback from this event'''
-        disconnect(self.__im_self, self.__signal.name or self, subscriber)
+        disconnect(self.__im_self, self, subscriber)
 
     def publish(self, **kwargs):
         '''Publish this event on `obj`'''
-        publish(self.__im_self, self.__signal.name or self, **kwargs)
+        publish(self.__im_self, self, **kwargs)
 
-    def __call__(self, **kwargs):
-        self.publish(**kwargs)
+    def __call__(self, *args, **kwargs):
+        '''parameterise and publish'''
+
+        if self.__signal.parameter_def:
+            sig, args = self.__signal.parameterise(args)
+            sig = sig.__get__(self.__im_self)
+
+            if len(args) == 0:
+                return sig
+        else:
+            sig = self
+
+        sig.publish(**kwargs)
 
     def __hash__(self):
         return hash(self.__signal) ^ hash(self.__im_self)
@@ -163,7 +210,7 @@ class boundsignal(object):
         return (self.__signal == osignal and self.__im_self == oself)
 
     def __repr__(self):
-        return '<bound signal of %r>' % (self.__im_self,)
+        return '<bound signal of %r, %r at 0x%r>' % (self.__im_self, self.__signal, id(self))
 
 
 def binding(cls, fun):
@@ -189,8 +236,9 @@ class signal(object):
     to publish events by that name for others to subscribe too
     '''
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, *parameters):
         self.name = name
+        self.parameter_def = parameters
 
     def __get__(self, obj, objtype=None):
         '''Descriptor protocol
@@ -207,12 +255,78 @@ class signal(object):
     disconnect = binding(boundsignal, boundsignal.disconnect)
     publish = binding(boundsignal, boundsignal.publish)
 
-    def __call__(self, obj, **kwargs):
-        '''Alias for publish'''
-        self.publish(obj, **kwargs)
+    def parameterise(self, args):
+        '''Create a parameterisation of this signal.'''
+
+        sig = psignal(self, args[:len(self.parameter_def)])
+        remainder = args[len(self.parameter_def):]
+        return (sig, remainder)
+
+    def __call__(self, *args, **kwargs):
+        '''Parameterise and publish.'''
+
+        if self.parameter_def:
+            sig, args = self.parameterise(args)
+
+            if len(args) == 0:
+                return sig
+        else:
+            sig = self
+
+        obj, = args
+        sig.publish(obj, **kwargs)
 
     def __repr__(self):
-        return '<signal(%s) at 0x%r>' % (self.name or '', id(self))
+        cls = self.__class__.__name__
+        return '<%s(%s) at 0x%r>' % (cls, self.name or '', id(self))
+
+
+class psignal(signal):
+    '''A signal with defined parameters.
+
+    Should not be created directly but by creating a `signal` with parameters
+    and then calling it to define them which results in a new `psignal` being
+    created.
+    '''
+
+    def __init__(self, parent, parameters):
+        # Check invariants to short circuit otherwise horrible debug sessions
+        assert not isinstance(parent, boundsignal)
+        assert not hasattr(parent, 'parent')
+
+        signal.__init__(self, parent.name, *parent.parameter_def)
+        self.parent = parent
+        self.parameters = tuple(parameters)
+        self._complete = len(parameters) == len(self.parameter_def)
+
+    def __hash__(self):
+        # the hash of the empty tuple is include so that a psignal with no
+        # parameters hash to the same value as its signal type.
+        return hash(self.parent) ^ hash(self.parameters) ^ hash(())
+
+    def __call__(self, obj, **kwargs):
+        '''Publish signal
+
+        This should only be done for fully defined parameterisations, if
+        called on a instance that is not fully defined `TypeError` is raised.
+        '''
+        if not self._complete:
+            raise TypeError("Parameters not fully defined %r" % self)
+        self.publish(obj, **kwargs)
+
+    def __eq__(self, other):
+        try:
+            oparent = other.parent
+            oparams = other.parameters
+        except AttributeError:
+            # Compare equal to signal type when no parameters are defined
+            return self.parent is other and self.parameters == ()
+
+        return self.parent == oparent and self.parameters == oparams
+
+    def __repr__(self):
+        cls = self.__class__.__name__
+        return '<%s(%s)[%r] at 0x%r>' % (cls, self.name or '', self.parameters, id(self))
 
 
 if __name__ == '__main__':  # pragma: no cover
