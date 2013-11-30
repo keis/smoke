@@ -215,7 +215,7 @@ class signal(object):
         return '<signal(%s) at 0x%r>' % (self.name or '', id(self))
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     import logging
     out = logging.getLogger().info
 
