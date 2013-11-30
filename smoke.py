@@ -64,6 +64,10 @@ def weak(meth, exception=Disconnect):
 
 def subscribers(obj, event):
     '''Get a list of all subscribers to `event` on `obj`'''
+
+    if hasattr(event, '__get__'):
+        event = event.__get__(obj)
+
     if not hasattr(obj, '_subscribers'):
         obj._subscribers = defaultdict(list)
 
@@ -72,12 +76,34 @@ def subscribers(obj, event):
 
 def subscribe(obj, event, subscriber):
     '''Add a subscriber to `event` on `obj`'''
+
+    if hasattr(event, '__get__'):
+        event = event.__get__(obj)
+
     subscribers(obj, event).append(subscriber)
 
 
 def disconnect(obj, event, subscriber):
     '''Disconnect a subscriber to `event` on `obj`'''
+
+    if hasattr(event, '__get__'):
+        event = event.__get__(obj)
+
     subscribers(obj, event).remove(subscriber)
+
+
+def variants(event):
+    '''Get a generator that yields variations of a event.'''
+
+    if hasattr(event, 'parameters'):
+        parent = event.parent
+        l = len(event.parameters)
+        for i in range(l+1):
+            yield parent.parameterise(event.parameters[:l-i])[0]
+    else:
+        yield event
+        if hasattr(event, 'name'):
+            yield event.name
 
 
 def _publish(obj, _event, **kwargs):
@@ -94,19 +120,21 @@ def _publish(obj, _event, **kwargs):
         All other exceptions will be passed to the parent context and will
         break the publish loop without notifing remaining subscribers
     '''
-    subs = subscribers(obj, _event)
-    disconnected = []
-    try:
-        for sub in subs:
-            try:
-                sub(**kwargs)
-            except Disconnect:
-                disconnected.append(sub)
-            except StopPropagation:
-                break
-    finally:
-        for d in disconnected:
-            subs.remove(d)
+
+    for var in variants(_event):
+        subs = subscribers(obj, var)
+        disconnected = []
+        try:
+            for sub in subs:
+                try:
+                    sub(**kwargs)
+                except Disconnect:
+                    disconnected.append(sub)
+                except StopPropagation:
+                    break
+        finally:
+            for d in disconnected:
+                subs.remove(d)
 
 
 @wraps(_publish, ['__doc__'])
@@ -145,15 +173,15 @@ class boundsignal(object):
 
     def subscribe(self, subscriber):
         '''Subscribe a callback to this event'''
-        subscribe(self.__im_self, self.__signal.name or self, subscriber)
+        subscribe(self.__im_self, self, subscriber)
 
     def disconnect(self, subscriber):
         '''Disconnect a callback from this event'''
-        disconnect(self.__im_self, self.__signal.name or self, subscriber)
+        disconnect(self.__im_self, self, subscriber)
 
     def publish(self, **kwargs):
         '''Publish this event on `obj`'''
-        publish(self.__im_self, self.__signal.name or self, **kwargs)
+        publish(self.__im_self, self, **kwargs)
 
     def __call__(self, *args, **kwargs):
         '''parameterise and publish'''

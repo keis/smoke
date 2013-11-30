@@ -32,6 +32,13 @@ class TestMixed(object):
 
         assert_that(self.listener.spam_cb, called_once_with(s=sentinel))
 
+    def test_subscribe_broker_publish_signal_with_name(self):
+        sentinel = object()
+        self.mixed.subscribe(self.mixed.egg, self.listener.egg_cb)
+        self.mixed.egg(s=sentinel)
+
+        assert_that(self.listener.egg_cb, called_once_with(s=sentinel))
+
     def test_subscribe_by_name(self):
         sentinel = object()
         self.mixed.subscribe('egg', self.listener.egg_cb)
@@ -39,15 +46,8 @@ class TestMixed(object):
 
         assert_that(self.listener.egg_cb, called_once_with(s=sentinel))
 
-    def test_publish_by_name(self):
-        sentinel = object()
-        self.mixed.egg.subscribe(self.listener.egg_cb)
-        self.mixed.publish('egg', s=sentinel)
-
-        assert_that(self.listener.egg_cb, called_once_with(s=sentinel))
-
     def test_publish_override(self):
         sentinel = object()
         self.mixed.publish = mock.Mock(wraps=self.mixed.publish)
         self.mixed.egg(s=sentinel)
-        assert_that(self.mixed.publish, called_once_with('egg', s=sentinel))
+        assert_that(self.mixed.publish, called_once_with(self.mixed.egg, s=sentinel))

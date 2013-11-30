@@ -74,3 +74,65 @@ def test_define_parameterisation_from_bound():
     assert_that(p, instance_of(boundsignal))
     assert_that(p, is_not(equal_to(q)))
     assert_that(p, equal_to(f.cname))
+
+
+def test_disallows_publish_without_all_parameters():
+    change = signal('change', 'attribute', 'type')
+    p = change('name')
+    with assert_raises(instance_of(TypeError)):
+        p(Source())
+
+
+def test_subscribe_one_generic():
+    s = Source()
+    l = mock.Mock()
+    sentinel = object()
+
+    change = signal('change', 'attribute', 'type')
+    p = change('name', 'knighted')
+    q = change('name')
+    q.subscribe(s, l)
+    p.publish(s, s=sentinel)
+
+    assert_that(l, called_once_with(s=sentinel))
+
+
+def test_subscribe_exact():
+    s = Source()
+    l = mock.Mock()
+    sentinel = object()
+
+    change = signal('change', 'attribute')
+    p = change('name')
+    p.subscribe(s, l)
+    p.publish(s, s=sentinel)
+
+    assert_that(l, called_once_with(s=sentinel))
+
+
+def test_subscribe_mismatch():
+    s = Source()
+    l = mock.Mock()
+    sentinel = object()
+
+    change = signal('change', 'attribute')
+    p = change('name')
+    q = change('age')
+    q.subscribe(s, l)
+    p.publish(s, s=sentinel)
+
+    assert_that(p, is_not(equal_to(q)))
+    assert_that(l, has_property('call_count', 0))
+
+
+def test_subscribe_generic():
+    s = Source()
+    l = mock.Mock()
+    sentinel = object()
+
+    change = signal('change', 'attribute')
+    p = change('name')
+    change.subscribe(s, l)
+    p.publish(s, s=sentinel)
+
+    assert_that(l, called_once_with(s=sentinel))
