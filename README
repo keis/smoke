@@ -5,10 +5,16 @@ A concise Publish/Subscribe utility module. It supports both free-form signal
 names and a stricter style where signals are declared first. You can also mix
 them.
 
-usage
+.. image:: https://secure.travis-ci.org/keis/smoke.png?branch=master
+    :target: http://travis-ci.org/keis/smoke
+
+.. image:: https://coveralls.io/repos/keis/smoke/badge.png?branch=master
+    :target: https://coveralls.io/r/keis/smoke?branch=master
+
+Usage
 -----
 
-.. code::
+.. code:: python
 
     import smoke
 
@@ -22,12 +28,17 @@ usage
     def say_goodbye(what):
         print("good bye %s" % (what,))
 
-    o = MyCls()
-
     # Using broker
+    o = MyCls()
     o.subscribe("appears", say_hello)
     o.publish("appears", what='world')
-    
+
     # Using declared signals
+    o = MyCls()
     o.leaves.subscribe(say_goodbye)
     o.leaves.publish(what='world')
+
+    # Mixing
+    o = MyCls()
+    o.subscribe("appears", say_hello)
+    o.appears.publish()

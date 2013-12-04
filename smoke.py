@@ -323,34 +323,46 @@ class psignal(signal):
 
 if __name__ == '__main__':  # pragma: no cover
     import logging
-    out = logging.getLogger().info
+    logging.basicConfig(level=logging.DEBUG)
+    log = logging.getLogger().info
 
     class Bar:
         throb = signal()
 
-    class Foo:
-        method_two = signal()
-
-        def __init__(self, bar):
-            self.__bar = bar
-            self.method_one = bar.throb
-            bar.throb.subscribe(self.method_two)
-
     bar = Bar()
 
-    bar.throb.subscribe(partial(out, 'hello '))
-    Bar.throb.subscribe(bar, partial(out, 'world!'))
+    # When subscribing through a instance the context is automaticly set to
+    # that instance.
+    bar.throb.subscribe(lambda: log('hello'))
+    # but it's also possible to subscribe with the signal type and pass the
+    # instance as the first argument
+    Bar.throb.subscribe(bar, lambda: log('world!'))
 
-    # prints
+    # Both callbacks are executed
     bar.throb()
 
-    # prints too
-    f = bar.throb
-    f()
+    # The Foo class show-case two ways signals can be reused and proxied from
+    # other objects
+    class Foo:
+        method_two = signal()
+        throb = Bar.throb
+
+        def __init__(self, bar):
+            # A simple alias is created by just copying the signal, note that
+            # the context will still be the Bar instance
+            self.method_one = bar.throb
+
+            # Alternativly a proxy signal can be setup that subscribes to the
+            # original signal
+            bar.throb.subscribe(self.method_two)
 
     foo = Foo(bar)
-    foo.method_one.subscribe(partial(out, 'spam'))
-    foo.method_two.subscribe(partial(out, 'egg'))
+    foo.method_one.subscribe(lambda: log('spam'))
+    foo.method_two.subscribe(lambda: log('egg'))
+    foo.throb.subscribe(lambda: log('bacon'))
 
-    # prints some more
+    # Executes the spam and egg callbacks in addition the previous
     bar.throb()
+
+    # Only executes the bacon callback
+    foo.throb.publish()
