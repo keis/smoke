@@ -290,6 +290,7 @@ class psignal(signal):
         self.parent = parent
         self.parameters = tuple(parameters)
         self._complete = len(parameters) == len(self.parameter_def)
+        hash(self.parameters)
 
     def __hash__(self):
         # the hash of the empty tuple is include so that a psignal with no

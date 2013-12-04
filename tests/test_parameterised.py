@@ -25,6 +25,12 @@ def test_define_parameterisation():
     assert_that(hash(p), equal_to(hash(q)))
 
 
+def test_define_with_unhashable_raises():
+    change = signal('change', 'context')
+    with assert_raises(instance_of(TypeError)):
+        change([])
+
+
 def test_empty_parameters_compare_equal_to_parent():
     change = signal('change', 'attribute')
     p = change()
