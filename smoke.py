@@ -65,9 +65,6 @@ def weak(meth, exception=Disconnect):
 def subscribers(obj, event):
     '''Get a list of all subscribers to `event` on `obj`'''
 
-    if hasattr(event, '__get__'):
-        event = event.__get__(obj)
-
     if not hasattr(obj, '_subscribers'):
         obj._subscribers = defaultdict(list)
 
@@ -77,29 +74,24 @@ def subscribers(obj, event):
 def subscribe(obj, event, subscriber):
     '''Add a subscriber to `event` on `obj`'''
 
-    if hasattr(event, '__get__'):
-        event = event.__get__(obj)
-
     subscribers(obj, event).append(subscriber)
 
 
 def disconnect(obj, event, subscriber):
     '''Disconnect a subscriber to `event` on `obj`'''
 
-    if hasattr(event, '__get__'):
-        event = event.__get__(obj)
-
     subscribers(obj, event).remove(subscriber)
 
 
-def variants(event):
+def variants(obj, event):
     '''Get a generator that yields variations of a event.'''
 
     if hasattr(event, 'parameters'):
         parent = event.parent
         l = len(event.parameters)
         for i in range(l+1):
-            yield parent.parameterise(event.parameters[:l-i])[0]
+            sig, _ = parent.parameterise(event.parameters[:l-i])
+            yield sig.__get__(obj)
     else:
         yield event
         if hasattr(event, 'name'):
@@ -121,7 +113,7 @@ def _publish(obj, _event, **kwargs):
         break the publish loop without notifing remaining subscribers
     '''
 
-    for var in variants(_event):
+    for var in variants(obj, _event):
         subs = subscribers(obj, var)
         disconnected = []
         try:

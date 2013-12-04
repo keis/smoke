@@ -1,5 +1,6 @@
 import mock
 from hamcrest import assert_that, equal_to
+from nose.plugins.skip import SkipTest
 from smoke import signal, Broker, Disconnect, StopPropagation
 from tests.matchers import called_once_with
 
@@ -38,6 +39,18 @@ class TestMixed(object):
         self.mixed.egg(s=sentinel)
 
         assert_that(self.listener.egg_cb, called_once_with(s=sentinel))
+
+    def test_subscribe_signal_publish_boundsignal(self):
+        # Supporting this in a general might be a bit to intrusive as
+        # boundmethod and function and other things implementing the descriptor
+        # protocol would be consider equal as well.
+        raise SkipTest("not supported, for now")
+
+        sentinel = object()
+        self.mixed.subscribe(Mixed.spam, self.listener.spam_cb)
+        self.mixed.publish(self.mixed.spam, s=sentinel)
+
+        assert_that(self.listener.spam_cb, called_once_with(s=sentinel))
 
     def test_subscribe_by_name(self):
         sentinel = object()
