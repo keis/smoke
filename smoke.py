@@ -182,7 +182,7 @@ class boundsignal(object):
             sig, args = self.__signal.parameterise(args)
             sig = sig.__get__(self.__im_self)
 
-            if len(args) == 0:
+            if len(kwargs) == 0:
                 return sig
         else:
             sig = self
