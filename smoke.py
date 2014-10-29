@@ -84,7 +84,7 @@ def disconnect(obj, event, subscriber):
 
 
 def variants(obj, event):
-    '''Get a generator that yields variations of a event.'''
+    '''Get a generator that yields variations of an event.'''
 
     if hasattr(event, 'parameters'):
         parent = event.parent
@@ -101,16 +101,16 @@ def variants(obj, event):
 def _publish(obj, _event, **kwargs):
     '''Invoke all subscribers to `event` on `obj`
 
-        Two flowcontrol exceptions exist that may be raised by subscribers
-         * `Disconnect`
-            A subscriber raising this exception will not be notified of
-            this event further
-         * `StopPropagation`
-            Immediatly breaks the publish loop, no other subscribers will
-            be notified.
+    Two flow control exceptions exist that may be raised by subscribers
+     * `Disconnect`
+        A subscriber raising this exception will not be notified of
+        this event further
+     * `StopPropagation`
+        Immediately breaks the publish loop, no other subscribers will
+        be notified.
 
-        All other exceptions will be passed to the parent context and will
-        break the publish loop without notifing remaining subscribers
+    All other exceptions will be passed to the parent context and will
+    break the publish loop without notifying remaining subscribers
     '''
 
     for var in variants(obj, _event):
@@ -176,7 +176,7 @@ class boundsignal(object):
         publish(self.__im_self, self, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        '''parameterise and publish'''
+        '''parametrise and publish'''
 
         if self.__signal.parameter_def:
             sig, args = self.__signal.parameterise(args)
@@ -248,14 +248,14 @@ class signal(object):
     publish = binding(boundsignal, boundsignal.publish)
 
     def parameterise(self, args):
-        '''Create a parameterisation of this signal.'''
+        '''Create a parametrisation of this signal.'''
 
         sig = psignal(self, args[:len(self.parameter_def)])
         remainder = args[len(self.parameter_def):]
         return (sig, remainder)
 
     def __call__(self, *args, **kwargs):
-        '''Parameterise and publish.'''
+        '''Parametrise and publish.'''
 
         if self.parameter_def:
             sig, args = self.parameterise(args)
@@ -300,7 +300,7 @@ class psignal(signal):
     def __call__(self, obj, **kwargs):
         '''Publish signal
 
-        This should only be done for fully defined parameterisations, if
+        This should only be done for fully defined parametrisations, if
         called on a instance that is not fully defined `TypeError` is raised.
         '''
         if not self._complete:
@@ -332,7 +332,7 @@ if __name__ == '__main__':  # pragma: no cover
 
     bar = Bar()
 
-    # When subscribing through a instance the context is automaticly set to
+    # When subscribing through a instance the context is automatically set to
     # that instance.
     bar.throb.subscribe(lambda: log('hello'))
     # but it's also possible to subscribe with the signal type and pass the
@@ -342,8 +342,8 @@ if __name__ == '__main__':  # pragma: no cover
     # Both callbacks are executed
     bar.throb()
 
-    # The Foo class show-case two ways signals can be reused and proxied from
-    # other objects
+    # The Foo class show-case two ways signals can be reused; by reference or
+    # via a proxy
     class Foo:
         method_two = signal()
         throb = Bar.throb
@@ -353,7 +353,7 @@ if __name__ == '__main__':  # pragma: no cover
             # the context will still be the Bar instance
             self.method_one = bar.throb
 
-            # Alternativly a proxy signal can be setup that subscribes to the
+            # Alternatively a proxy signal can be setup that subscribes to the
             # original signal
             bar.throb.subscribe(self.method_two)
 
