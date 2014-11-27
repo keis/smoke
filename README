@@ -1,15 +1,20 @@
 smoke
 =====
 
+.. image:: https://img.shields.io/pypi/v/smoke.svg?style=flat
+    :target: https://pypi.python.org/pypi?name=smoke&:action=display
+
+.. image:: https://img.shields.io/travis/keis/smoke.svg?style=flat
+    :target: http://travis-ci.org/keis/smoke
+
+.. image:: https://img.shields.io/coveralls/keis/smke.svg?style=flat
+    :target: https://coveralls.io/r/keis/smoke?branch=master
+
+
+
 A concise Publish/Subscribe utility module. It supports both free-form signal
 names and a stricter style where signals are declared first. You can also mix
 them.
-
-.. image:: https://secure.travis-ci.org/keis/smoke.png?branch=master
-    :target: http://travis-ci.org/keis/smoke
-
-.. image:: https://coveralls.io/repos/keis/smoke/badge.png?branch=master
-    :target: https://coveralls.io/r/keis/smoke?branch=master
 
 Usage
 -----
