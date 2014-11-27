@@ -6,7 +6,7 @@ python:
     - "3.3"
     - "pypy"
 install:
-    - pip install PyHamcrest coveralls
+    - pip install PyHamcrest coveralls matchmock
 script:
     nosetests --with-coverage --cover-package=smoke
 after_success:

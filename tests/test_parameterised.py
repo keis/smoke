@@ -1,7 +1,8 @@
 from smoke import signal, boundsignal
 import mock
 from hamcrest import assert_that, instance_of, equal_to, is_not, has_property
-from tests.matchers import called_once_with, assert_raises
+from matchmock import called_once_with
+from tests.matchers import assert_raises
 
 
 class Source(object):

@@ -1,8 +1,8 @@
 import mock
 from hamcrest import assert_that, equal_to
+from matchmock import called_once_with
 from nose.plugins.skip import SkipTest
 from smoke import signal, Broker, Disconnect, StopPropagation
-from tests.matchers import called_once_with
 
 
 class Source(object):
