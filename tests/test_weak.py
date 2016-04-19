@@ -6,6 +6,7 @@ from hamcrest import assert_that, equal_to, instance_of
 
 class Dummy(object):
     value = None
+
     def spam(self):
         return self.value
 
@@ -25,4 +26,4 @@ def test_weak_raises_disconnect():
     gc.collect()
 
     with assert_raises(instance_of(Disconnect)):
-        r = w()
+        w()
