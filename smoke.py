@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
-from functools import partial, wraps
+from functools import wraps
 
 
 class SignalControl(Exception):
@@ -35,7 +35,7 @@ def weak(meth, exception=Disconnect):
     try:  # python 3
         fun = meth.__func__
         ref = meth.__self__
-    except AttributeError as e:  # python 2
+    except AttributeError:  # python 2
         fun = meth.im_func
         ref = meth.im_self
 
@@ -202,7 +202,11 @@ class boundsignal(object):
         return (self.__signal == osignal and self.__im_self == oself)
 
     def __repr__(self):
-        return '<bound signal of %r, %r at 0x%r>' % (self.__im_self, self.__signal, id(self))
+        return '<bound signal of %r, %r at 0x%r>' % (
+            self.__im_self,
+            self.__signal,
+            id(self)
+        )
 
 
 def binding(cls, fun):
@@ -319,7 +323,12 @@ class psignal(signal):
 
     def __repr__(self):
         cls = self.__class__.__name__
-        return '<%s(%s)[%r] at 0x%r>' % (cls, self.name or '', self.parameters, id(self))
+        return '<%s(%s)[%r] at 0x%r>' % (
+            cls,
+            self.name or '',
+            self.parameters,
+            id(self)
+        )
 
 
 if __name__ == '__main__':  # pragma: no cover

@@ -1,0 +1,7 @@
+pytest>=2.9.1
+pytest-pep8
+pytest-flakes
+pytest-cov
+PyHamcrest
+mock
+matchmock

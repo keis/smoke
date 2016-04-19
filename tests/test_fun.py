@@ -1,7 +1,7 @@
 import mock
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that
 from matchmock import called_once_with
-from smoke import signal, publish, subscribe, Disconnect, StopPropagation
+from smoke import signal, publish, subscribe
 
 
 class Source(object):

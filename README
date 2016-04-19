@@ -7,7 +7,7 @@ smoke
 .. image:: https://img.shields.io/travis/keis/smoke.svg?style=flat
     :target: http://travis-ci.org/keis/smoke
 
-.. image:: https://img.shields.io/coveralls/keis/smke.svg?style=flat
+.. image:: https://img.shields.io/coveralls/keis/smoke.svg?style=flat
     :target: https://coveralls.io/r/keis/smoke?branch=master
 
 
